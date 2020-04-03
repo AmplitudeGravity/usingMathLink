@@ -2,8 +2,8 @@ module UseMathLink
 
 using SymEngine
 using MathLink
-using SyntaxTree
-export math2symEngine, math2Expr, evalSym, genfun
+export math2symEngine, math2Expr, evalSym, Power
+
 function math2symEngine(symb::MathLink.WSymbol)
     SymEngine.symbols(symb.name)
 end
@@ -37,7 +37,7 @@ function math2Expr(expr::MathLink.WExpr)
     elseif expr.head.name=="Plus"
         return Expr(:call, :+,map(math2Expr,expr.args)...)
     elseif expr.head.name=="Power"
-        return Expr(:call, :^, map(math2Expr,expr.args)...)
+        return Expr(:call, :Power, map(math2Expr,expr.args)...)
     elseif expr.head.name=="Rational"
         return  Expr(:call, ://, map(math2Expr,expr.args)...)
     else
@@ -69,10 +69,27 @@ function evalSym(ex::SymEngine.Basic)
     end
 end
 
-#from the Julia expression to Julia function
-macro genfun(expr,args)
-    :($(Expr(:tuple,args.args...))->$expr)
+function Power(f::T1,g::T2) where {T1 <: Union{Int, Int64, Float32, Float64,Complex{Float64}},T2 <: Union{Int, Int64, Float32, Float64, Complex{Float64}}}
+ fc=Complex(f);
+   if imag(fc)==0.0
+       fc=real(fc)+0.0im
+   end
+ fc^g
 end
-genfun(expr,args) = :(@genfun $expr [$(args...)]) |> eval
+
+#replace of the symbols in an expression
+function rep!(e, old, new)
+   for (i,a) in enumerate(e.args)
+       if a==old
+           e.args[i] = new
+       elseif a isa Expr
+           rep!(a, old, new)
+       end
+       ## otherwise do nothing
+   end
+   e
+end
+
+#print(Power(-0.8+0.0im,-0.3))
 
 end
