@@ -3,7 +3,7 @@ module UseMathLink
 using SymEngine
 using MathLink
 using SyntaxTree, SpecialFunctions
-export math2symEngine, math2Expr, evalSym, Power, expr2fun
+export math2symEngine, math2Expr, evalSym, Power, expr2fun, List
 macro expr2fun(expr,args)
     :($(Expr(:tuple,args.args...))->$expr)
 end
@@ -26,7 +26,8 @@ function math2symEngine(expr::MathLink.WExpr)
     elseif expr.head.name=="Rational"
         return  //(map(math2symEngine,expr.args)...)
     else
-        return SymEngine.SymFunction(expr.head.name)(map(math2symEngine,expr.args)...)
+        return Expr(:call, Symbol(expr.head.name), map(math2symEngine,expr.args)...)|>eval
+        #return SymEngine.SymFunction(expr.head.name)(map(math2symEngine,expr.args)...)
     end
 end
 #Mathematica to julia expr
@@ -82,6 +83,9 @@ function Power(f::T1,g::T2) where {T1 <: Union{Int, Int64, Float32, Float64,Comp
  fc^g
 end
 
+function List(args...)
+ [args...]
+end
 #replace of the symbols in an expression
 function rep!(e, old, new)
    for (i,a) in enumerate(e.args)
