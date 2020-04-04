@@ -2,7 +2,12 @@ module UseMathLink
 
 using SymEngine
 using MathLink
-export math2symEngine, math2Expr, evalSym, Power
+using SyntaxTree, SpecialFunctions
+export math2symEngine, math2Expr, evalSym, Power, expr2fun
+macro expr2fun(expr,args)
+    :($(Expr(:tuple,args.args...))->$expr)
+end
+expr2fun(expr,args) = :(@expr2fun $expr [$(args...)]) |> eval
 
 function math2symEngine(symb::MathLink.WSymbol)
     SymEngine.symbols(symb.name)
