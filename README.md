@@ -12,13 +12,13 @@ It depends on the following packages: SymEngine MathLink SyntaxTree, SpecialFunc
 ```lambdify(math2symEngine("OutPut of MathLink"),(symbol variables)) ```
 
 To get value of the symEngine function, you can also use the evalSym() function
-    ```julia
+```julia
        MLExpr=W`List[polygamma[n,x],gamma[y],gamma[z]]`|>weval
        SEExpr=math2symEngine(MLExpr)
        @vars n x y
        subs(SEExpr[1],n=>2,x=>0.2)|>evalSym
        -251.47803611443592
-     ```
+ ```
     
 
 ```Power()``` function to replace the power function ^ in Julia. The fraction Power fucntion is fixed to the canonical branch.
