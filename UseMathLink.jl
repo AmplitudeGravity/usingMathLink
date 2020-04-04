@@ -25,9 +25,11 @@ function math2symEngine(expr::MathLink.WExpr)
         return ^(map(math2symEngine,expr.args)...)
     elseif expr.head.name=="Rational"
         return  //(map(math2symEngine,expr.args)...)
+    elseif expr.head.name=="List"
+        return List(map(math2symEngine,expr.args)...)
     else
-        return Expr(:call, Symbol(expr.head.name), map(math2symEngine,expr.args)...)|>eval
-        #return SymEngine.SymFunction(expr.head.name)(map(math2symEngine,expr.args)...)
+        #return Expr(:call, Symbol(expr.head.name), map(math2symEngine,expr.args)...)|>eval
+        return SymEngine.SymFunction(expr.head.name)(map(math2symEngine,expr.args)...)
     end
 end
 #Mathematica to julia expr
@@ -75,7 +77,7 @@ function evalSym(ex::SymEngine.Basic)
     end
 end
 
-function Power(f::T1,g::T2) where {T1 <: Union{Int, Int64, Float32, Float64,Complex{Float64}},T2 <: Union{Int, Int64, Float32, Float64, Complex{Float64}}}
+function Power(f::T1,g::T2) where {T1 <: Union{Basic, Int, Int64, Float32, Float64,Complex{Float64}},T2 <: Union{Basic,Int, Int64, Float32, Float64, Complex{Float64}}}
  fc=Complex(f);
    if imag(fc)==0.0
        fc=real(fc)+0.0im
