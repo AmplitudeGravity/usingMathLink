@@ -12,7 +12,8 @@ It depends on the following packages: SymEngine MathLink SyntaxTree, SpecialFunc
 ```lambdify(math2symEngine("OutPut of MathLink"),(symbol variables)) ```
 
 To get value of the symEngine function, you can also use the evalSym() function
-    ```MLExpr=W`List[polygamma[n,x],gamma[y],gamma[z]]`|>weval
+    ```julia
+       MLExpr=W`List[polygamma[n,x],gamma[y],gamma[z]]`|>weval
        SEExpr=math2symEngine(MLExpr)
        @vars n x y
        subs(SEExpr[1],n=>2,x=>0.2)|>evalSym
