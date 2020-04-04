@@ -1,7 +1,7 @@
 # usingMathLink
 It convert the MathLink output to Julia function and symengine function. 
-The functions are used to perform the integral by Cuba.
-It depend on the package: SymEngine MathLink SyntaxTree, SpecialFunctions
+The functions are used to in Cuba which is a numerical integration package.
+It depends on the following packages: SymEngine MathLink SyntaxTree, SpecialFunctions
 
 math2Expr() is transform the mathematica Expression to Julia Expr
 
