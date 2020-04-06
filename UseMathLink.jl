@@ -3,12 +3,26 @@ module UseMathLink
 using SymEngine
 using MathLink
 using SyntaxTree, SpecialFunctions
-export math2symEngine, math2Expr, evalSym, Power, expr2fun, List
+export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, remove!
 macro expr2fun(expr,args)
     :($(Expr(:tuple,args.args...))->$expr)
 end
 expr2fun(expr,args) = :(@expr2fun $expr [$(args...)]) |> eval
 
+#define the symbol variables
+macro varj(x...)
+    vars=Expr(:block)
+    for s in x
+        push!(vars.args, Expr(:(=), esc(s), Expr(:call, Symbol, Expr(:quote, s))))
+    end
+    push!(vars.args, Expr(:tuple, map(esc, x)...))
+    vars
+end
+
+#remove an item in the list
+function remove!(list, item)
+    deleteat!([list...], findall(x->x==item, list))
+end
 function math2symEngine(symb::MathLink.WSymbol)
     SymEngine.symbols(symb.name)
 end
@@ -48,6 +62,8 @@ function math2Expr(expr::MathLink.WExpr)
         return Expr(:call, :Power, map(math2Expr,expr.args)...)
     elseif expr.head.name=="Rational"
         return  Expr(:call, ://, map(math2Expr,expr.args)...)
+    elseif expr.head.name=="List"
+        return  List(map(math2Expr,expr.args)...)
     else
         return Expr(:call, Symbol(expr.head.name), map(math2Expr,expr.args)...)
     end
@@ -77,8 +93,8 @@ function evalSym(ex::SymEngine.Basic)
     end
 end
 
-function Power(f::T1,g::T2) where {T1 <: Union{Basic, Int, Int64, Float32, Float64,Complex{Float64}},T2 <: Union{Basic,Int, Int64, Float32, Float64, Complex{Float64}}}
- fc=Complex(f);
+function Power(f::T1,g::T2) where {T1 <: Union{Irrational,Int, Int64, Float32, Float64,Complex{Float64}},T2 <: Union{Irrational,Int, Int64, Float32, Float64, Complex{Float64}}}
+    typeof(f)==Complex{Float64} ? fc=f : fc=Complex(f,0)
    if imag(fc)==0.0
        fc=real(fc)+0.0im
    end
@@ -101,6 +117,7 @@ function rep!(e, old, new)
    e
 end
 
-#print(Power(-0.8+0.0im,-0.3))
-
+#Power(pi+0.0im,-0.3)
+Power(ℯ,-0.2)
+#@varj x1 x2
 end
