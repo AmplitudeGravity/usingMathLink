@@ -3,19 +3,31 @@ module UseMathLink
 using SymEngine
 using MathLink
 using SyntaxTree, SpecialFunctions
-export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, remove!
+export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, @varjs remove!
 macro expr2fun(expr,args)
     :($(Expr(:tuple,args.args...))->$expr)
 end
 expr2fun(expr,args) = :(@expr2fun $expr [$(args...)]) |> eval
 
 #define the symbol variables
+macro varsj(x, j::Int64)
+
+end
 macro varj(x...)
     vars=Expr(:block)
     for s in x
         push!(vars.args, Expr(:(=), esc(s), Expr(:call, Symbol, Expr(:quote, s))))
     end
     push!(vars.args, Expr(:tuple, map(esc, x)...))
+    vars
+end
+
+macro varjs(x, j::Int64)
+    vars=Expr(:block)
+    for i = 1:j
+        push!(vars.args, Expr(:(=), esc(Symbol("$x$i")), Expr(:quote,Symbol("$x$i"))))
+    end
+    push!(vars.args,  Expr(:tuple,map(esc, "$x".*map(string,1:j).|>Symbol)...))
     vars
 end
 
