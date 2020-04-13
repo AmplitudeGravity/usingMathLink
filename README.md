@@ -3,13 +3,17 @@ It convert the MathLink output to Julia function and symengine function.
 The functions are used to in Cuba which is a numerical integration package.
 It depends on the following packages: SymEngine MathLink SyntaxTree, SpecialFunctions
 
-```julia math2Expr("OutPut of MathLink")``` transform the mathematica Expression to Julia Expr
+```julia 
+math2Expr("OutPut of MathLink")``` transform the mathematica Expression to Julia Expr
 
-```expr2fun("Julia Expr") ``` transform the Julia Expr to a julia function. This function is used in the CUBA.
+```julia 
+expr2fun("Julia Expr") ``` transform the Julia Expr to a julia function. This function is used in the CUBA.
 
-```math2symEngine("OutPut of MathLink")``` transform the mathematica Expreesion to symEngine function. To get julia function, you can use the lambdify function in SymEngine.
+```julia 
+math2symEngine("OutPut of MathLink")``` transform the mathematica Expreesion to symEngine function. To get julia function, you can use the lambdify function in SymEngine.
 
-```lambdify(math2symEngine("OutPut of MathLink"),(symbol variables)) ```
+```julia 
+lambdify(math2symEngine("OutPut of MathLink"),(symbol variables)) ```
 
 To get value of the symEngine function, you can also use the evalSym() function
 ```julia
