@@ -19,7 +19,11 @@ To get value of the symEngine function, you can also use the evalSym() function
        subs(SEExpr[1],n=>2,x=>0.2)|>evalSym
        -251.47803611443592
  ```
-    
+
+Add the OPFunctor: it can transform a function into an Funtor
+```julia
+    ObFunctor("function name", variable numbers)
+```
 
 ```Power()``` function to replace the power function ^ in Julia. The fraction Power fucntion is fixed to the canonical branch.
 ```julia
