@@ -42,3 +42,9 @@ Power(-2-0.0im,-0.2)
 0.7042902001692478 - 0.5116967824803669im
 ```
 
+define the symbol variables by the macro 
+```julia
+@varjs x 3 3 3
+@varjs x 16
+@varj x1 x2 x3 y4
+```
