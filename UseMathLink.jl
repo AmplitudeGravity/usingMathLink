@@ -3,16 +3,28 @@ module UseMathLink
 using SymEngine
 using MathLink
 using SyntaxTree, SpecialFunctions
-export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, @varjs remove!
+export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, @varjs, remove!, ObFunctor
+export wedge, Length
 macro expr2fun(expr,args)
     :($(Expr(:tuple,args.args...))->$expr)
 end
 expr2fun(expr,args) = :(@expr2fun $expr [$(args...)]) |> eval
 
-#define the symbol variables
-macro varsj(x, j::Int64)
 
+mutable struct  ObFunctor  #transform to the functior for a given function (方便但慢一些)
+    name::String
+    numvar::Int
+    ObFunctor(name,numvar)=new(name,numvar)
 end
+function (odF::ObFunctor)(args...)
+    if length(args)==odF.numvar
+        getfield(Main, Symbol(odF.name))(args...)
+    else
+        print("wrong args")
+    end
+end
+#define the symbol variables Expr(:quote, s) Expr(:quote,Symbol("$x$i"))
+
 macro varj(x...)
     vars=Expr(:block)
     for s in x
@@ -42,20 +54,15 @@ end
 function math2symEngine(num::Number)
     num
 end
+
+binanyOPSymEngine=Dict("Times" => *,"Plus"=> +,"Power"=>^,"Rational"=>//)
 function math2symEngine(expr::MathLink.WExpr)
-    if expr.head.name=="Times"
-        return *(map(math2symEngine,expr.args)...)
-    elseif expr.head.name=="Plus"
-        return +(map(math2symEngine,expr.args)...)
-    elseif expr.head.name=="Power"
-        return ^(map(math2symEngine,expr.args)...)
-    elseif expr.head.name=="Rational"
-        return  //(map(math2symEngine,expr.args)...)
-    elseif expr.head.name=="List"
+    haskey(binanyOPSymEngine,expr.head.name) ? op=binanyOPSymEngine[expr.head.name] : op=SymFunction(expr.head.name)
+    if expr.head.name=="List"
         return List(map(math2symEngine,expr.args)...)
     else
         #return Expr(:call, Symbol(expr.head.name), map(math2symEngine,expr.args)...)|>eval
-        return SymEngine.SymFunction(expr.head.name)(map(math2symEngine,expr.args)...)
+        return op(map(math2symEngine,expr.args)...)
     end
 end
 #Mathematica to julia expr
@@ -65,19 +72,13 @@ end
 function math2Expr(num::Number)
     num
 end
+binanyOPSymbol=Dict("Times" => :*,"Plus"=> :+,"Rational"=>://)
 function math2Expr(expr::MathLink.WExpr)
-    if expr.head.name=="Times"
-        return Expr(:call, :*, map(math2Expr,expr.args)...)
-    elseif expr.head.name=="Plus"
-        return Expr(:call, :+,map(math2Expr,expr.args)...)
-    elseif expr.head.name=="Power"
-        return Expr(:call, :Power, map(math2Expr,expr.args)...)
-    elseif expr.head.name=="Rational"
-        return  Expr(:call, ://, map(math2Expr,expr.args)...)
-    elseif expr.head.name=="List"
+    haskey(binanyOPSymbol,expr.head.name) ? op=binanyOPSymbol[expr.head.name] : op=Symbol(expr.head.name)
+    if  expr.head.name=="List"
         return  List(map(math2Expr,expr.args)...)
     else
-        return Expr(:call, Symbol(expr.head.name), map(math2Expr,expr.args)...)
+        return Expr(:call, op, map(math2Expr,expr.args)...)
     end
 end
 
@@ -129,6 +130,12 @@ function rep!(e, old, new)
    e
 end
 
+function wedge(args...)
+    args
+end
+function Length(f::Expr)
+    length(f.args)-1
+end
 #Power(pi+0.0im,-0.3)
 Power(ℯ,-0.2)
 #@varj x1 x2
