@@ -3,8 +3,8 @@ module UseMathLink
 using SymEngine
 using MathLink
 using SyntaxTree, SpecialFunctions
-export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, @varjs, remove!, ObFunctor
-export wedge, Length
+export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, @varjs, @vars
+export wedge, Length, remove!, ObFunctor
 macro expr2fun(expr,args)
     :($(Expr(:tuple,args.args...))->$expr)
 end
@@ -24,6 +24,15 @@ function (odF::ObFunctor)(args...)
     end
 end
 #define the symbol variables Expr(:quote, s) Expr(:quote,Symbol("$x$i"))
+macro vars(x,n::Int64)
+    q=Expr(:block)
+    for i = 1:n
+        push!(q.args, Expr(:(=), esc(Symbol("$x$i")), Expr(:call, :(SymEngine._symbol), Expr(:quote, Symbol("$x$i")))))
+    end
+    push!(q.args, Expr(:tuple, map(esc, "$x".*map(string,1:n).|>Symbol)...))
+    q
+end
+
 
 macro varj(x...)
     vars=Expr(:block)
@@ -42,6 +51,18 @@ macro varjs(x, j::Int64)
     push!(vars.args,  Expr(:tuple,map(esc, "$x".*map(string,1:j).|>Symbol)...))
     vars
 end
+
+macro varjs(x, j...)
+    vars=Expr(:block)
+    for i in Iterators.product((1:k for k in j)...)
+        push!(vars.args, Expr(:(=), esc(Symbol("$x$(i...)")), Expr(:quote,Symbol("$x$(i...)"))))
+    end
+    push!(vars.args,  Expr(:tuple,map(esc, "$x".*map(string,["$(i...)" for i in Iterators.product((1:k for k in j)...) ]).|>Symbol)...))
+    vars
+end
+
+
+
 
 #remove an item in the list
 function remove!(list, item)
