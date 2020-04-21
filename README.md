@@ -3,6 +3,22 @@ It convert the MathLink output to Julia function and symengine function.
 The functions are used to in Cuba which is a numerical integration package.
 It depends on the following packages: SymEngine MathLink SyntaxTree, SpecialFunctions
 
+
+Example: define the mathlink symbol for variable or mathematica functions
+```julia
+   using UseMathLink, MathLink
+   @wvar Solve Flatten #import the mathematica function 当心函数重名
+   @wvars c 2
+   sol=Solve((c1+0.2+0.2im==0,c1+(-1)*c2+0.1==0),(c1,c2))|>weval|>Flatten|>weval|>math2Expr
+```
+The output result is 
+```julia
+   2-element Array{Expr,1}:
+ :(Rule(c1, Complex(-0.2, -0.2)))
+ :(Rule(c2, Complex(-0.1, -0.2)))
+```
+
+
 ```julia 
 math2Expr("OutPut of MathLink")
 ``` 
@@ -44,7 +60,10 @@ Power(-2-0.0im,-0.2)
 
 define the symbol variables by the macro 
 ```julia
-@varjs x 3 3 3
-@varjs x 16
-@varj x1 x2 x3 y4
+@jvars x 3 3 3
+@jvars x 16
+@jvar x1 x2 x3 y4
 ```
+
+
+
