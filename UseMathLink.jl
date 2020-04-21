@@ -2,13 +2,28 @@ module UseMathLink
 
 using SymEngine
 using MathLink
-using SyntaxTree, SpecialFunctions
-export math2symEngine, math2Expr, evalSym, Power, expr2fun, List, @varj, @varjs, @vars
-export wedge, Length, remove!, ObFunctor
-macro expr2fun(expr,args)
+using SpecialFunctions
+export math2symEngine, math2Expr, evalSym, Power, expr2fun, List # @vars
+export wedge, Length, remove!, ObFunctor, rep!
+export @wvar, @wvars, @jvarj, @jvars
+macro expr2fun(expr,args) #This is genfun in SyntaxTree.jl by @chakravala
     :($(Expr(:tuple,args.args...))->$expr)
 end
 expr2fun(expr,args) = :(@expr2fun $expr [$(args...)]) |> eval
+
+import Base: +,  ^,  //, *, ==
+function ==(w1::T1, w2::T2) where {T1<:Union{MathLink.WSymbol,MathLink.WExpr,Number}, T2<: Union{MathLink.WSymbol,MathLink.WExpr,Number}}
+     W"Equal"(w1,w2)
+end
+for (op, binarymethod) in ((:+, W"Plus"), (:*, W"Times"),  (://, W"Rational"), (:^, W"Power"))
+    @eval begin
+        ($op)(w1::T1, w2::T2) where {T1<:Union{MathLink.WSymbol,MathLink.WExpr}, T2<: Union{MathLink.WSymbol,MathLink.WExpr}}= ($binarymethod)(w1,w2)
+        ($op)(w1::T1, w2::Number) where {T1<:Union{MathLink.WSymbol,MathLink.WExpr}}= ($binarymethod)(w1,w2)
+        ($op)(w1::Number, w2::T2) where {T2<:Union{MathLink.WSymbol,MathLink.WExpr}}= ($binarymethod)(w1,w2)
+        ($op)(w1::Complex, w2::T2) where {T2<:Union{MathLink.WSymbol,MathLink.WExpr}}= ($binarymethod)(W"Complex"(real(w1),imag(w1)),w2)
+        ($op)(w1::T1, w2::Complex) where {T1<:Union{MathLink.WSymbol,MathLink.WExpr}}= ($binarymethod)(w1,W"Complex"(real(w2),imag(w2)))
+    end
+end
 
 
 mutable struct  ObFunctor  #transform to the functior for a given function (方便但慢一些)
@@ -23,7 +38,8 @@ function (odF::ObFunctor)(args...)
         print("wrong args")
     end
 end
-#define the symbol variables Expr(:quote, s) Expr(:quote,Symbol("$x$i"))
+#define the symbol variables
+#=
 macro vars(x,n::Int64)
     q=Expr(:block)
     for i = 1:n
@@ -32,9 +48,34 @@ macro vars(x,n::Int64)
     push!(q.args, Expr(:tuple, map(esc, "$x".*map(string,1:n).|>Symbol)...))
     q
 end
+=#
+macro wvar(x...)
+    vars=Expr(:block)
+    for s in x
+        push!(vars.args, Expr(:(=), esc(s), Expr(:call, MathLink.WSymbol, Expr(:quote, s))))
+    end
+    push!(vars.args, Expr(:tuple, map(esc, x)...))
+    vars
+end
+macro wvars(x, j::Int64)
+    vars=Expr(:block)
+    for i = 1:j
+        push!(vars.args, Expr(:(=), esc(Symbol("$x$i")), Expr(:quote,MathLink.WSymbol("$x$i"))))
+    end
+    push!(vars.args,  Expr(:tuple,map(esc, "$x".*map(string,1:j).|>MathLink.WSymbol)...))
+    vars
+end
 
+macro wvars(x, j...)
+    vars=Expr(:block)
+    for i in Iterators.product((1:k for k in j)...)
+        push!(vars.args, Expr(:(=), esc(Symbol("$x$(i...)")), Expr(:quote,MathLink.WSymbol("$x$(i...)"))))
+    end
+    push!(vars.args,  Expr(:tuple,map(esc, "$x".*map(string,["$(i...)" for i in Iterators.product((1:k for k in j)...) ]).|>MathLink.WSymbol)...))
+    vars
+end
 
-macro varj(x...)
+macro jvar(x...)
     vars=Expr(:block)
     for s in x
         push!(vars.args, Expr(:(=), esc(s), Expr(:call, Symbol, Expr(:quote, s))))
@@ -43,7 +84,7 @@ macro varj(x...)
     vars
 end
 
-macro varjs(x, j::Int64)
+macro jvars(x, j::Int64)
     vars=Expr(:block)
     for i = 1:j
         push!(vars.args, Expr(:(=), esc(Symbol("$x$i")), Expr(:quote,Symbol("$x$i"))))
@@ -52,7 +93,7 @@ macro varjs(x, j::Int64)
     vars
 end
 
-macro varjs(x, j...)
+macro jvars(x, j...)
     vars=Expr(:block)
     for i in Iterators.product((1:k for k in j)...)
         push!(vars.args, Expr(:(=), esc(Symbol("$x$(i...)")), Expr(:quote,Symbol("$x$(i...)"))))
@@ -158,6 +199,6 @@ function Length(f::Expr)
     length(f.args)-1
 end
 #Power(pi+0.0im,-0.3)
-Power(ℯ,-0.2)
+Power(0.4-0.0im,-0.2)
 #@varj x1 x2
 end
